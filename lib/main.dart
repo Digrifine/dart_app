@@ -1,7 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
+import 'JsonParser/Liquids.dart';
+import 'JsonParser/Services.dart';
 
 void main() => runApp(MaterialApp(home: LoveSales()));
 
@@ -160,17 +162,17 @@ class SuperMarkets extends StatefulWidget {
 }
 
 class _SuperMarketsState extends State<SuperMarkets> {
-  List<Liquid> parseLiquids(String responseBody) {
-    final parsed = jsonDecode(responseBody).cast<Map<String, dynamic>>();
+  List<Liquid> _liquids;
+  bool _loading;
 
-    return parsed.map<Liquid>((json) => Liquid.fromJson(json)).toList();
-  }
-
-  Future<List<Liquid>> fetchPhotos(http.Client client) async {
-    final response =
-        await client.get('https://jsonplaceholder.typicode.com/photos');
-
-    return parsePhotos(response.body);
+  @override
+  void initState() {
+    super.initState();
+    _loading = true;
+    Services.getLiquids().then((liquids) {
+      _liquids = liquids;
+      _loading = false;
+    });
   }
 
   @override
@@ -179,35 +181,15 @@ class _SuperMarketsState extends State<SuperMarkets> {
       backgroundColor: Colors.grey[900],
       body: Padding(
           padding: EdgeInsets.fromLTRB(30, 40, 30, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Center(
-                child: Text(
-                  'SUPER MARKET PAGE',
-                  style: TextStyle(color: Colors.grey, letterSpacing: 2),
-                ),
-              )
-            ],
-          )),
-    );
-  }
-}
-
-class Liquid {
-  final String name;
-  final String url;
-  final String cost;
-  final String photoUrl;
-
-  Liquid({this.name, this.cost, this.photoUrl, this.url});
-
-  factory Liquid.fromJson(Map<String, dynamic> json) {
-    return Liquid(
-      name: json['name'] as String,
-      url: json['url'] as String,
-      cost: json['cost'] as String,
-      photoUrl: json['photoUrl'] as String,
+          child: ListView.builder(
+              itemCount: null == _liquids ? 0 : _liquids.length,
+              itemBuilder: (context, index) {
+                Liquid liquid = _liquids[index];
+                return ListTile(
+                  title: Text(liquid.name),
+                  subtitle: Text(liquid.zhitkostCost),
+                );
+              })),
     );
   }
 }
